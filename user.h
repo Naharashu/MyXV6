@@ -16,6 +16,7 @@ int mknod(const char*, short, short);
 int unlink(const char*);
 int fstat(int fd, struct stat*);
 int link(const char*, const char*);
+int rename(const char*, const char*);
 int mkdir(const char*);
 int chdir(const char*);
 int dup(int);
@@ -23,6 +24,8 @@ int getpid(void);
 char* sbrk(int);
 int sleep(int);
 int uptime(void);
+
+
 
 // ulib.c
 int stat(const char*, struct stat*);
@@ -37,3 +40,5 @@ void* memset(void*, int, uint);
 void* malloc(uint);
 void free(void*);
 int atoi(const char*);
+
+int reboot(void);
