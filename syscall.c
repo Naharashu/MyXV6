@@ -106,6 +106,7 @@ extern int sys_uptime(void);
 
 extern int sys_rename(void);
 extern int sys_reboot(void);
+extern int sys_setforegroundpid(void);
 
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
@@ -131,6 +132,7 @@ static int (*syscalls[])(void) = {
 [SYS_close]   sys_close,
 [SYS_rename]  sys_rename,
 [SYS_reboot]  sys_reboot,
+[SYS_setforegroundpid]  sys_setforegroundpid,
 };
 
 void

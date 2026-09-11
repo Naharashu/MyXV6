@@ -186,7 +186,7 @@ UPROGS=\
 	_zombie\
 	_rename\
 	_reboot\
-	_testzero\
+	_head\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)

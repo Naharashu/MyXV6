@@ -3,7 +3,7 @@
 #include "fcntl.h"
 #include "types.h"
 #include "user.h"
-#include "pids.h"
+
 
 
 
@@ -117,9 +117,9 @@ void runcmd(struct cmd *cmd) {
             int pid = fork1();
             if (pid == 0)
                 runcmd(lcmd->left);
-            foreground_pid = pid;
+            setforegroundpid(pid);
             wait();
-            foreground_pid = 0;
+            setforegroundpid(0);
             runcmd(lcmd->right);
             break;
 
@@ -189,9 +189,9 @@ int main(void) {
         int pid = fork1();
         if (pid == 0)
             runcmd(parsecmd(buf));
-        foreground_pid = pid;
+        setforegroundpid(pid);
         wait();
-        foreground_pid = 0;
+        setforegroundpid(0);
     }
     exit();
 }

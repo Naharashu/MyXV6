@@ -23,3 +23,4 @@
 
 #define SYS_rename 22
 #define SYS_reboot 23
+#define SYS_setforegroundpid 24

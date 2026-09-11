@@ -42,3 +42,4 @@ void free(void*);
 int atoi(const char*);
 
 int reboot(void);
+int setforegroundpid(int i);
