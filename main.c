@@ -27,7 +27,7 @@ main(void)
   consoleinit();   // console hardware
   zeroinit();
   nullinit();
-  randominit();
+  rndominit();
   uartinit();      // serial port
   pinit();         // process table
   tvinit();        // trap vectors

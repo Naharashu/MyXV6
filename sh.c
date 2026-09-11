@@ -5,7 +5,7 @@
 #include "user.h"
 #include "pids.h"
 
-int foreground_pid;
+
 
 // Parsed command representation
 #define EXEC 1

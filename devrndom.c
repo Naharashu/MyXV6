@@ -82,7 +82,7 @@ int rndwrite(struct inode *ip, char *buf, int n) {
   return n;
 }
 
-void randominit(void) {
+void rndominit(void) {
   init_xorshift32();
   devsw[RNDOM].write = rndwrite;
   devsw[RNDOM].read = rndread;

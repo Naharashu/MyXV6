@@ -31,7 +31,7 @@ void            zeroinit(void);
 void            nullinit(void);
 
 // devrndom.c
-void            randominit(void);
+void            rndominit(void);
 
 // exec.c
 int             exec(char*, char**);
