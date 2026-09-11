@@ -10,6 +10,8 @@ struct sleeplock;
 struct stat;
 struct superblock;
 
+
+
 // bio.c
 void            binit(void);
 struct buf*     bread(uint, uint);
@@ -21,6 +23,15 @@ void            consoleinit(void);
 void            cprintf(char*, ...);
 void            consoleintr(int(*)(void));
 void            panic(char*) __attribute__((noreturn));
+
+// devzero.c
+void            zeroinit(void);
+
+// devnull.c
+void            nullinit(void);
+
+// devrndom.c
+void            randominit(void);
 
 // exec.c
 int             exec(char*, char**);

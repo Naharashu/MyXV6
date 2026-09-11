@@ -64,6 +64,57 @@ xint(uint x)
   return y;
 }
 
+uint
+mkdir_inode(uint parent, char *name)
+{
+    uint inum = ialloc(T_DIR);
+    struct dirent de;
+
+    bzero(&de, sizeof(de));
+    de.inum = xshort(inum);
+    strcpy(de.name, ".");
+    iappend(inum, &de, sizeof(de));
+
+    bzero(&de, sizeof(de));
+    de.inum = xshort(parent);
+    strcpy(de.name, "..");
+    iappend(inum, &de, sizeof(de));
+
+    bzero(&de, sizeof(de));
+    de.inum = xshort(inum);
+    strncpy(de.name, name, DIRSIZ);
+    iappend(parent, &de, sizeof(de));
+
+    return inum;
+}
+
+uint
+mknod_inode(uint parent, char *name, short major, short minor)
+{
+    uint inum = ialloc(T_DEV);
+
+    // Set major/minor in the newly allocated dinode.
+    struct dinode din;
+    rinode(inum, &din);
+
+    din.type = xshort(T_DEV);
+    din.major = xshort(major);
+    din.minor = xshort(minor);
+    din.nlink = xshort(1);
+    din.size = 0;
+
+    winode(inum, &din);
+
+    struct dirent de;
+    bzero(&de, sizeof(de));
+    de.inum = xshort(inum);
+    strncpy(de.name, name, DIRSIZ);
+
+    iappend(parent, &de, sizeof(de));
+
+    return inum;
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -126,6 +177,15 @@ main(int argc, char *argv[])
   de.inum = xshort(rootino);
   strcpy(de.name, "..");
   iappend(rootino, &de, sizeof(de));
+
+  uint devino = mkdir_inode(rootino, "dev");
+  mkdir_inode(rootino, "libc");
+  mkdir_inode(rootino, "tmp");
+
+  mknod_inode(devino, "console", 1, 0);
+  mknod_inode(devino, "zero", 2, 0);
+  mknod_inode(devino, "null", 3, 0);
+  mknod_inode(devino, "random", 4, 0);
 
   for(i = 2; i < argc; i++){
     assert(index(argv[i], '/') == 0);

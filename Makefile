@@ -1,6 +1,9 @@
 OBJS = \
 	bio.o\
 	console.o\
+	devzero.o\
+	devrndom.o\
+	devnull.o\
 	exec.o\
 	file.o\
 	fs.o\
@@ -183,6 +186,7 @@ UPROGS=\
 	_zombie\
 	_rename\
 	_reboot\
+	_testzero\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)
