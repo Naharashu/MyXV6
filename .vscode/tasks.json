@@ -1,0 +1,21 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Organize Files",
+			"type": "shell",
+			"command": "mkdir -p kernel user tools && mv *.c kernel/ && mv *.h kernel/ && mv *.S kernel/ && mv randomtest.c user/",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Organize Files",
+			"type": "shell",
+			"command": "mkdir -p kernel user tools && mv *.c kernel/ && mv *.h kernel/ && mv *.S kernel/ && mv randomtest.c user/",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		}
+	]
+}

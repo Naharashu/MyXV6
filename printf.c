@@ -35,6 +35,32 @@ printint(int fd, int xx, int base, int sgn)
     putc(fd, buf[i]);
 }
 
+static void
+printdouble(int fd, double value)
+{
+  int whole, fraction, i;
+
+  if(value < 0){
+    putc(fd, '-');
+    value = -value;
+  }
+
+  whole = (int)value;
+  value -= whole;
+  fraction = (int)(value * 1000000.0 + 0.5);
+  if(fraction >= 1000000){
+    whole++;
+    fraction -= 1000000;
+  }
+
+  printint(fd, whole, 10, 0);
+  putc(fd, '.');
+  for(i = 100000; i > 0; i /= 10){
+    putc(fd, '0' + fraction / i);
+    fraction %= i;
+  }
+}
+
 // Print to the given fd. Only understands %d, %x, %p, %s.
 void
 printf(int fd, const char *fmt, ...)
@@ -42,6 +68,10 @@ printf(int fd, const char *fmt, ...)
   char *s;
   int c, i, state;
   uint *ap;
+  union {
+    double value;
+    uint word[2];
+  } number;
 
   state = 0;
   ap = (uint*)(void*)&fmt + 1;
@@ -60,6 +90,14 @@ printf(int fd, const char *fmt, ...)
       } else if(c == 'x' || c == 'p'){
         printint(fd, *ap, 16, 0);
         ap++;
+      } else if(c == 'u') {
+        printint(fd, *ap, 10, 0);
+        ap++;
+      } else if(c == 'f') {
+        number.word[0] = ap[0];
+        number.word[1] = ap[1];
+        printdouble(fd, number.value);
+        ap += 2;
       } else if(c == 's'){
         s = (char*)*ap;
         ap++;

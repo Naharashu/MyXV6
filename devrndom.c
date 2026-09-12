@@ -1,25 +1,21 @@
-// zero input and output.
-// Input is from the keyboard or serial port.
-// Output is written to the screen and serial port.
 
 #include "types.h"
 #include "defs.h"
-#include "param.h"
-#include "traps.h"
-#include "spinlock.h"
 #include "sleeplock.h"
+#include "spinlock.h"
 #include "fs.h"
 #include "file.h"
 #include "memlayout.h"
 #include "mmu.h"
+#include "param.h"
 #include "proc.h"
+#include "traps.h"
 #include "x86.h"
 
 static uint state;
+static struct spinlock rnd_lock;
 
-static uint
-random_seed(void)
-{
+static uint random_seed(void) {
     uint lo, hi;
 
     asm volatile("rdtsc" : "=a"(lo), "=d"(hi));
@@ -28,30 +24,36 @@ random_seed(void)
 }
 
 static void init_xorshift32(void) {
-  state  = random_seed();
-  if(state == 0)
+    initlock(&rnd_lock, "rnd");
+    state = random_seed();
+    state ^= random_seed();
+    state = (state << 13) ^ (random_seed() >> 5);
+    if (state == 0)
         state = 0x12345678;
 }
 
 static uint xorshift32(void) {
-  uint x;
-
-  x = state;
-  x = x ^ (x << 13);
-  x = x ^ (x >> 17);
-  x = x ^ (x << 5);
-  state = x;
-  return x;
+    uint x;
+    acquire(&rnd_lock);
+    x = state;
+    x = x ^ (x << 13);
+    x = x ^ (x >> 17);
+    x = x ^ (x << 5);
+    state = x;
+    release(&rnd_lock);
+    return x;
 }
 
-int
-rndread(struct inode *ip, char *dst, int n)
-{
+int rndread(struct inode *ip, char *dst, int n) {
     int target = n;
 
-    while(n >= 4){
-        if(myproc()->killed)
-          return -1;
+    iunlock(ip);
+
+    while (n >= 4) {
+        if (myproc()->killed) {
+            ilock(ip);
+            return -1;
+        }
         uint r = xorshift32();
 
         dst[0] = r;
@@ -63,28 +65,33 @@ rndread(struct inode *ip, char *dst, int n)
         n -= 4;
     }
 
-    if(n > 0){
+    if (n > 0) {
         uint r = xorshift32();
 
-        while(n > 0){
-            if(myproc()->killed)
-              return -1;
+        while (n > 0) {
+            if (myproc()->killed) {
+                ilock(ip);
+                return -1;
+            }
             *dst++ = r;
             r >>= 8;
             n--;
         }
     }
 
+    ilock(ip);
+
     return target;
 }
 
 int rndwrite(struct inode *ip, char *buf, int n) {
-  return n;
+    iunlock(ip);
+    ilock(ip);
+    return -1;
 }
 
 void rndominit(void) {
-  init_xorshift32();
-  devsw[RNDOM].write = rndwrite;
-  devsw[RNDOM].read = rndread;
+    init_xorshift32();
+    devsw[RNDOM].write = rndwrite;
+    devsw[RNDOM].read = rndread;
 }
-

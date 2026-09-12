@@ -40,3 +40,4 @@ extern struct devsw devsw[];
 #define ZERO 2
 #define DEVNULL 3
 #define RNDOM 4
+#define URNDOM 5

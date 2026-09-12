@@ -186,6 +186,7 @@ main(int argc, char *argv[])
   mknod_inode(devino, "zero", 2, 0);
   mknod_inode(devino, "null", 3, 0);
   mknod_inode(devino, "random", 4, 0);
+  mknod_inode(devino, "urandom", 5, 0);
 
   for(i = 2; i < argc; i++){
     assert(index(argv[i], '/') == 0);

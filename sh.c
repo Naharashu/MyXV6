@@ -127,14 +127,16 @@ void runcmd(struct cmd *cmd) {
             pcmd = (struct pipecmd *)cmd;
             if (pipe(p) < 0)
                 panic("pipe");
-            if (fork1() == 0) {
+            int lpid = fork1();
+            if (lpid == 0) {
                 close(1);
                 dup(p[1]);
                 close(p[0]);
                 close(p[1]);
                 runcmd(pcmd->left);
             }
-            if (fork1() == 0) {
+            int rpid = fork1();
+            if (rpid == 0) {
                 close(0);
                 dup(p[0]);
                 close(p[0]);
@@ -143,10 +145,12 @@ void runcmd(struct cmd *cmd) {
             }
             close(p[0]);
             close(p[1]);
+            setforegroundpid(lpid);
             wait();
+            setforegroundpid(rpid);       
             wait();
+            setforegroundpid(0);
             break;
-
         case BACK:
             bcmd = (struct backcmd *)cmd;
             if (fork1() == 0)

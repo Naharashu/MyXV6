@@ -6,7 +6,7 @@ MyXV6 is a toy os based on xv6.
 
 1. Max file size is now ~500 MBs
 2. FS size now ~500 MBs
-3. added /dev with /dev/null, /dev/random, /dev/zero
+3. added /dev with /dev/null, /dev/random, /dev/zero, /dev/urandom
 4. head tool and rename
 5. 16KB stack for programs
 6. ^C (ctrl + c) kills program

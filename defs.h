@@ -33,6 +33,9 @@ void            nullinit(void);
 // devrndom.c
 void            rndominit(void);
 
+// devurandom.c
+void            urndominit(void);
+
 // exec.c
 int             exec(char*, char**);
 
