@@ -5,6 +5,12 @@ MyXV6 is a toy os based on xv6.
 > [!WARNING]
 > Some parts may be vibe coded because i not really low-level coder, but i tried to learn something
 
+# Requirements
+
+Minimum too boot: i686, 8 MB(if edit PHYSTOP), 600 MB drive
+Recomended: i686, 16-32 MB (if edit PHYSTOP), 600 MB drive
+Too pass usertests: i686, 128 MB, 600 MB drive
+
 ## Difference between MyXV6 and xv6
 
 1. Max file size is now ~500 MBs
@@ -17,3 +23,4 @@ MyXV6 is a toy os based on xv6.
 8. Currently working on RTL8139 driver
 9. 8KB kernel stack size
 10. 8MB of ram mapped for virtual memory(instead of 4MB for xv6)
+11. Appending data to file(>> and O_APPEND)
