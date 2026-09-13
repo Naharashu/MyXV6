@@ -93,19 +93,21 @@ found:
 
   release(&ptable.lock);
 
-  // Allocate kernel stack.
-  if((p->kstack = kalloc()) == 0){
+  // Allocate the full kernel stack as physically contiguous pages.
+  p->kstack = kmalloc(KSTACKSIZE / PGSIZE);
+
+  if(p->kstack == 0){
     p->state = UNUSED;
     return 0;
   }
+
   sp = p->kstack + KSTACKSIZE;
 
   // Leave room for trap frame.
   sp -= sizeof *p->tf;
   p->tf = (struct trapframe*)sp;
 
-  // Set up new context to start executing at forkret,
-  // which returns to trapret.
+  // Set up new context to start executing at forkret
   sp -= 4;
   *(uint*)sp = (uint)trapret;
 
@@ -116,6 +118,7 @@ found:
 
   return p;
 }
+
 
 //PAGEBREAK: 32
 // Set up first user process.
@@ -194,6 +197,7 @@ fork(void)
   // Copy process state from proc.
   if((np->pgdir = copyuvm(curproc->pgdir, curproc->sz)) == 0){
     kfree(np->kstack);
+    kfree(np->kstack + PGSIZE);
     np->kstack = 0;
     np->state = UNUSED;
     return -1;
@@ -290,6 +294,7 @@ wait(void)
         // Found one.
         pid = p->pid;
         kfree(p->kstack);
+        kfree(p->kstack + PGSIZE);
         p->kstack = 0;
         freevm(p->pgdir);
         p->pid = 0;
@@ -308,7 +313,7 @@ wait(void)
       return -1;
     }
 
-    // Wait for children to exit.  (See wakeup1 call in proc_exit.)
+    // Wait for children ЮЮЮЮЮЮto exit.  (See wakeup1 call in proc_exit.)
     sleep(curproc, &ptable.lock);  //DOC: wait-sleep
   }
 }

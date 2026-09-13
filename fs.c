@@ -527,24 +527,28 @@ int namecmp(const char *s, const char *t) {
 // Look for a directory entry in a directory.
 // If found, set *poff to byte offset of entry.
 struct inode *dirlookup(struct inode *dp, char *name, uint *poff) {
-    uint off, inum;
+    uint off, blockoff, inum;
     struct dirent de;
+    struct buf *bp;
 
     if (dp->type != T_DIR)
         panic("dirlookup not DIR");
 
-    for (off = 0; off < dp->size; off += sizeof(de)) {
-        if (readi(dp, (char *)&de, off, sizeof(de)) != sizeof(de))
-            panic("dirlookup read");
-        if (de.inum == 0)
-            continue;
-        if (namecmp(name, de.name) == 0) {
-            // entry matches path element
-            if (poff)
-                *poff = off;
-            inum = de.inum;
-            return iget(dp->dev, inum);
+    for (off = 0; off < dp->size; off += BSIZE) {
+        bp = bread(dp->dev, bmap(dp, off / BSIZE));
+        for (blockoff = 0; blockoff < BSIZE && off + blockoff < dp->size;
+             blockoff += sizeof(de)) {
+            memmove(&de, bp->data + blockoff, sizeof(de));
+            if (de.inum != 0 && namecmp(name, de.name) == 0) {
+                // entry matches path element
+                if (poff)
+                    *poff = off + blockoff;
+                inum = de.inum;
+                brelse(bp);
+                return iget(dp->dev, inum);
+            }
         }
+        brelse(bp);
     }
 
     return 0;

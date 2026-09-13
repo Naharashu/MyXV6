@@ -19,7 +19,7 @@ extern char end[]; // first address after kernel loaded from ELF file
 #include "pci.h"
 
 int main(void) {
-    kinit1(end, P2V(4 * 1024 * 1024));          // phys page allocator
+    kinit1(end, P2V(8 * 1024 * 1024));          // phys page allocator
     kvmalloc();                                 // kernel page table
     mpinit();                                   // detect other processors
     lapicinit();                                // interrupt controller
@@ -34,7 +34,7 @@ int main(void) {
     fileinit();                                 // file table
     ideinit();                                  // disk
     startothers();                              // start other processors
-    kinit2(P2V(4 * 1024 * 1024), P2V(PHYSTOP)); // must come after startothers()
+    kinit2(P2V(8 * 1024 * 1024), P2V(PHYSTOP)); // must come after startothers()
     zeroinit();
     nullinit();
     rndominit();
@@ -101,10 +101,12 @@ static void startothers(void) {
 // PTE_PS in a page directory entry enables 4Mbyte pages.
 
 __attribute__((__aligned__(PGSIZE))) pde_t entrypgdir[NPDENTRIES] = {
-    // Map VA's [0, 4MB) to PA's [0, 4MB)
+    // Map VA's [0, 8MB) to PA's [0, 8MB)
     [0] = (0) | PTE_P | PTE_W | PTE_PS,
-    // Map VA's [KERNBASE, KERNBASE+4MB) to PA's [0, 4MB)
+    [1] = (4 * 1024 * 1024) | PTE_P | PTE_W | PTE_PS,
+    // Map VA's [KERNBASE, KERNBASE+4MB) to PA's [0, 8MB)
     [KERNBASE >> PDXSHIFT] = (0) | PTE_P | PTE_W | PTE_PS,
+    [(KERNBASE >> PDXSHIFT) + 1] = (4 * 1024 * 1024) | PTE_P | PTE_W | PTE_PS,
 };
 
 //PAGEBREAK!

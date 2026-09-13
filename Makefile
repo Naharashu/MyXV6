@@ -191,6 +191,7 @@ UPROGS=\
 	_head\
 	_hex\
 	_size\
+	_time\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)

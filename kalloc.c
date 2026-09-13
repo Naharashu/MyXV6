@@ -76,6 +76,8 @@ kfree(char *v)
     release(&kmem.lock);
 }
 
+
+
 // Allocate one 4096-byte page of physical memory.
 // Returns a pointer that the kernel can use.
 // Returns 0 if the memory cannot be allocated.
@@ -92,5 +94,63 @@ kalloc(void)
   if(kmem.use_lock)
     release(&kmem.lock);
   return (char*)r;
+}
+
+// Allocate n physically contiguous pages.
+// Returns the address of the first page, or 0 if no such block exists.
+char*
+kmalloc(int n)
+{
+  struct run *candidate, *current, *previous;
+  struct run *pages[n];
+  int i, found;
+
+  if(n <= 0)
+    panic("kmalloc");
+
+  if(kmem.use_lock)
+    acquire(&kmem.lock);
+
+  found = 0;
+  for(candidate = kmem.freelist; candidate && !found;
+      candidate = candidate->next){
+    found = 1;
+    for(i = 0; i < n; i++){
+      pages[i] = 0;
+      for(current = kmem.freelist; current; current = current->next){
+        if((char*)current == (char*)candidate + i * PGSIZE){
+          pages[i] = current;
+          break;
+        }
+      }
+      if(pages[i] == 0){
+        found = 0;
+        break;
+      }
+    }
+  }
+
+  if(!found) {
+    if(kmem.use_lock)
+      release(&kmem.lock);
+    return 0;
+  }
+
+  // Remove all pages while holding the lock, so another CPU cannot take one.
+  for(i = 0; i < n; i++){
+    previous = 0;
+    for(current = kmem.freelist; current != pages[i];
+        current = current->next)
+      previous = current;
+    if(previous)
+      previous->next = current->next;
+    else
+      kmem.freelist = current->next;
+  }
+
+  if(kmem.use_lock)
+    release(&kmem.lock);
+
+  return (char*)pages[0];
 }
 

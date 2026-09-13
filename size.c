@@ -3,7 +3,7 @@
 #include "user.h"
 #include "libc/stdint.h"
 
-char buf[512];
+char buf[1024];
 
 void
 size(int fd)
