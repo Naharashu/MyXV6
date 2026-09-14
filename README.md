@@ -24,3 +24,4 @@ Too pass usertests: i686, 128 MB, 600 MB drive
 9. 8KB kernel stack size
 10. 8MB of ram mapped for virtual memory(instead of 4MB for xv6)
 11. Appending data to file(>> and O_APPEND)
+12. clear shell command

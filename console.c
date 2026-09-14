@@ -140,7 +140,10 @@ cgaputc(int c)
   outb(CRTPORT, 15);
   pos |= inb(CRTPORT+1);
 
-  if(c == '\n')
+  if(c == '\f'){
+    memset(crt, 0, sizeof(crt[0]) * 25 * 80);
+    pos = 0;
+  } else if(c == '\n')
     pos += 80 - pos%80;
   else if(c == BACKSPACE){
     if(pos > 0) --pos;
@@ -172,7 +175,15 @@ consputc(int c)
       ;
   }
 
-  if(c == BACKSPACE){
+  if(c == '\f'){
+    uartputc('\033');
+    uartputc('[');
+    uartputc('2');
+    uartputc('J');
+    uartputc('\033');
+    uartputc('[');
+    uartputc('H');
+  } else if(c == BACKSPACE){
     uartputc('\b'); uartputc(' '); uartputc('\b');
   } else
     uartputc(c);

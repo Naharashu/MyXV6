@@ -81,7 +81,7 @@ AS = $(TOOLPREFIX)clang
 LD = $(TOOLPREFIX)ld
 OBJCOPY = $(TOOLPREFIX)llvm-objcopy
 OBJDUMP = $(TOOLPREFIX)llvm-objdump
-CFLAGS = -fno-pic -static -fno-builtin -fno-strict-aliasing -O2 -Wall -MD -ggdb -m32 -fno-omit-frame-pointer -target i686-unknown-elf -Wno-gnu-designator -fno-vectorize -fno-slp-vectorize -mno-sse -mno-sse2 -mno-mmx -mno-3dnow -mno-avx -mno-avx2 -march=i686
+CFLAGS = -fno-pic -static -fno-builtin -fno-strict-aliasing -O2 -Wall -MD -ggdb -m32 -fno-omit-frame-pointer -target i686-unknown-elf -Wno-gnu-designator -fno-vectorize -fno-slp-vectorize -mno-sse -mno-sse2 -mno-mmx -mno-3dnow -mno-avx -mno-avx2 -march=i686 -mtune=i686
 CFLAGS += $(shell $(CC) -fno-stack-protector -E -x c /dev/null >/dev/null 2>&1 && echo -fno-stack-protector)
 ASFLAGS = -m32 -gdwarf-2 -target i686-unknown-elf
 # FreeBSD ld wants ``elf_i386_fbsd''

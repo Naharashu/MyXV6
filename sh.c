@@ -55,6 +55,7 @@ struct backcmd {
 int fork1(void); // Fork but panics on failure.
 void panic(char *);
 struct cmd *parsecmd(char *);
+int isblankline(char *);
 
 // Execute cmd.  Never returns.
 void runcmd(struct cmd *cmd) {
@@ -95,6 +96,8 @@ void runcmd(struct cmd *cmd) {
                 }
 
                 strcpy(fullpath + len, ecmd->argv[0]);
+
+                if(strcmp(fullpath, "/")==0) return;
 
                 exec(fullpath, ecmd->argv);
             }
@@ -183,6 +186,13 @@ int main(void) {
 
     // Read and run input commands.
     while (getcmd(buf, sizeof(buf)) >= 0) {
+        if (isblankline(buf))
+            continue;
+        if (strcmp(buf, "clear\n") == 0 || strcmp(buf, "clear\r") == 0 ||
+            strcmp(buf, "clear") == 0) {
+            printf(2, "\f");
+            continue;
+        }
         if (buf[0] == 'c' && buf[1] == 'd' && buf[2] == ' ') {
             // Chdir must be called by the parent, not the child.
             buf[strlen(buf) - 1] = 0; // chop \n
@@ -276,6 +286,12 @@ struct cmd *backcmd(struct cmd *subcmd) {
 
 char whitespace[] = " \t\r\n\v";
 char symbols[] = "<|>&;()";
+
+int isblankline(char *buf) {
+    while (*buf && strchr(whitespace, *buf))
+        buf++;
+    return *buf == 0;
+}
 
 int gettoken(char **ps, char *es, char **q, char **eq) {
     char *s;
