@@ -2,8 +2,7 @@
 #define STDIO_H
 
 // MyXV6 stdio.h
-// printf, putc
 
-#include "../printf.c"
+void printf(int fd, const char *fmt, ...);
 
 #endif

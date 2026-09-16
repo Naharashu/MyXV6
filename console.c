@@ -128,6 +128,70 @@ panic(char *s)
 #define BACKSPACE 0x100
 #define CRTPORT 0x3d4
 static ushort *crt = (ushort*)P2V(0xb8000);  // CGA memory
+static uchar cga_color = 0x07;
+
+static int ansi_state;
+static int ansi_value;
+static int ansi_have_value;
+
+static void
+ansi_sgr(int code)
+{
+  if(code == 0){
+    cga_color = 0x07;
+  } else if(code == 1){
+    cga_color |= 0x08;
+  } else if(code == 22){
+    cga_color &= 0xf7;
+  } else if(code >= 30 && code <= 37){
+    cga_color = (cga_color & 0xf8) | (code - 30 == 6 ? 6 :
+      code - 30 == 7 ? 7 : code - 30 == 1 ? 4 : code - 30 == 2 ? 2 :
+      code - 30 == 3 ? 6 : code - 30 == 4 ? 1 : code - 30 == 5 ? 5 : 0);
+  } else if(code >= 40 && code <= 47){
+    cga_color = (cga_color & 0x0f) | ((code - 40) << 4);
+  }
+}
+
+static int
+ansi_putc(int c)
+{
+  if(ansi_state == 0){
+    if(c == 033){
+      ansi_state = 1;
+      return 1;
+    }
+    return 0;
+  }
+  if(ansi_state == 1){
+    if(c == '['){
+      ansi_state = 2;
+      ansi_value = 0;
+      ansi_have_value = 0;
+      return 1;
+    }
+    ansi_state = 0;
+    return 1;
+  }
+  if(c >= '0' && c <= '9'){
+    ansi_value = ansi_value * 10 + c - '0';
+    ansi_have_value = 1;
+    return 1;
+  }
+  if(c == ';'){
+    if(ansi_have_value)
+      ansi_sgr(ansi_value);
+    ansi_value = 0;
+    ansi_have_value = 0;
+    return 1;
+  }
+  if(c == 'm'){
+    ansi_sgr(ansi_have_value ? ansi_value : 0);
+    ansi_state = 0;
+    return 1;
+  }
+  ansi_state = 0;
+  return 1;
+}
 
 static void
 cgaputc(int c)
@@ -148,7 +212,7 @@ cgaputc(int c)
   else if(c == BACKSPACE){
     if(pos > 0) --pos;
   } else
-    crt[pos++] = (c&0xff) | 0x0700;  // black on white
+    crt[pos++] = (c&0xff) | (cga_color << 8);
 
   if(pos < 0 || pos > 25*80)
     panic("pos under/overflow");
@@ -163,7 +227,7 @@ cgaputc(int c)
   outb(CRTPORT+1, pos>>8);
   outb(CRTPORT, 15);
   outb(CRTPORT+1, pos);
-  crt[pos] = ' ' | 0x0700;
+  crt[pos] = ' ' | (cga_color << 8);
 }
 
 void
@@ -183,11 +247,15 @@ consputc(int c)
     uartputc('\033');
     uartputc('[');
     uartputc('H');
+    cgaputc(c);
   } else if(c == BACKSPACE){
     uartputc('\b'); uartputc(' '); uartputc('\b');
-  } else
+    cgaputc(c);
+  } else {
     uartputc(c);
-  cgaputc(c);
+    if(!ansi_putc(c))
+      cgaputc(c);
+  }
 }
 
 #define INPUT_BUF 128

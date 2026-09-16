@@ -88,6 +88,8 @@ mkdir_inode(uint parent, char *name)
     return inum;
 }
 
+
+
 uint
 mknod_inode(uint parent, char *name, short major, short minor)
 {
@@ -113,6 +115,33 @@ mknod_inode(uint parent, char *name, short major, short minor)
     iappend(parent, &de, sizeof(de));
 
     return inum;
+}
+
+uint
+add_file(uint parent, char *host_path, char *file_name)
+{
+  int fd, cc;
+  char buf[BSIZE];
+  uint inum;
+  struct dirent de;
+
+  if ((fd = open(host_path, O_RDONLY)) < 0) {
+    perror(host_path);
+    exit(1);
+  }
+
+  inum = ialloc(T_FILE);
+
+  bzero(&de, sizeof(de));
+  de.inum = xshort(inum);
+  strncpy(de.name, file_name, DIRSIZ);
+  iappend(parent, &de, sizeof(de));
+
+  while ((cc = read(fd, buf, sizeof(buf))) > 0)
+    iappend(inum, buf, cc);
+
+  close(fd);
+  return inum;
 }
 
 int
@@ -179,7 +208,13 @@ main(int argc, char *argv[])
   iappend(rootino, &de, sizeof(de));
 
   uint devino = mkdir_inode(rootino, "dev");
-  mkdir_inode(rootino, "libc");
+  uint libcino = mkdir_inode(rootino, "libc");
+  add_file(libcino, "libc/stdint.h", "stdint.h");
+  add_file(libcino, "libc/stdio.h", "stdio.h");
+  add_file(libcino, "libc/string.h", "string.h");
+  add_file(libcino, "libc/stddef.h", "stddef.h");
+  add_file(libcino, "libc/stdlib.h", "stdlib.h");
+  add_file(libcino, "libc/stdlib.c", "stdlib.c");
   mkdir_inode(rootino, "tmp");
 
   mknod_inode(devino, "console", 1, 0);

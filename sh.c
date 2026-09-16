@@ -80,7 +80,7 @@ void runcmd(struct cmd *cmd) {
 
             if (strchr(ecmd->argv[0], '/')) {
                 exec(ecmd->argv[0], ecmd->argv);
-                printf(2, "exec %s failed\n", ecmd->argv[0]);
+                printf(2, "not found %s\n", ecmd->argv[0]);
                 exit();
             }
 
@@ -102,7 +102,7 @@ void runcmd(struct cmd *cmd) {
                 exec(fullpath, ecmd->argv);
             }
 
-            printf(2, "exec %s failed\n", ecmd->argv[0]);
+            printf(2, "not found: %s\n", ecmd->argv[0]);
             exit();
 
         case REDIR:

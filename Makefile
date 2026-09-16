@@ -161,6 +161,11 @@ _forktest: forktest.o $(ULIB)
 	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o _forktest forktest.o ulib.o usys.o
 	$(OBJDUMP) -S _forktest > forktest.asm
 
+_random: random.o $(ULIB) libc/stdlib.o
+	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o _random $^
+	$(OBJDUMP) -S _random > random.asm
+	$(OBJDUMP) -t _random | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > random.sym
+
 mkfs: mkfs.c fs.h
 	gcc -Werror -Wall -o mkfs mkfs.c
 
@@ -192,6 +197,8 @@ UPROGS=\
 	_hex\
 	_size\
 	_time\
+	_random\
+	_editor\
 
 fs.img: mkfs README.md $(UPROGS)
 	./mkfs fs.img README.md $(UPROGS)
