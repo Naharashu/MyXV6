@@ -209,6 +209,8 @@ cgaputc(int c)
     pos = 0;
   } else if(c == '\n')
     pos += 80 - pos%80;
+  else if(c == '\t')
+    pos += 8 - pos%8;
   else if(c == BACKSPACE){
     if(pos > 0) --pos;
   } else

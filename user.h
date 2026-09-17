@@ -35,7 +35,7 @@ char* strchr(const char*, char c);
 int strcmp(const char*, const char*);
 #define STDIN 1
 #define STDERR 2
-void printf(int, const char*, ...);
+int printf(int, const char*, ...);
 char* gets(char*, int max);
 uint strlen(const char*);
 void* memset(void*, int, uint);

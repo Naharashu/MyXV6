@@ -61,9 +61,8 @@ printdouble(int fd, double value)
   }
 }
 
-// Print to the given fd. Only understands %d, %x, %p, %s.
-void
-printf(int fd, const char *fmt, ...)
+// Print to the given fd. Only understands %d, %x, %p, %s. + %f, %u
+int printf(int fd, const char *fmt, ...)
 {
   char *s;
   int c, i, state;
@@ -120,4 +119,5 @@ printf(int fd, const char *fmt, ...)
       state = 0;
     }
   }
+  return (int)strlen(fmt);
 }

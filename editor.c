@@ -68,7 +68,13 @@ int main(int argc, char *argv[])
 	}
 
 	//存放文件内容
-	char *text[MAX_LINE_NUMBER] = {};
+	char **text = malloc(MAX_LINE_NUMBER * sizeof(*text));
+	if (text == 0)
+	{
+		printf(1, "editor: out of memory\n");
+		exit();
+	}
+	memset(text, 0, MAX_LINE_NUMBER * sizeof(*text));
 	text[0] = malloc(MAX_LINE_LENGTH);
 	memset(text[0], 0, MAX_LINE_LENGTH);
 	

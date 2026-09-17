@@ -4,7 +4,7 @@
 typedef unsigned char uchar;
 typedef unsigned int uint;
 
-char *strcpy(char *s, const char *t) {
+static char *strcpy(char *s, const char *t) {
     char *os;
 
     os = s;
@@ -13,13 +13,13 @@ char *strcpy(char *s, const char *t) {
     return os;
 }
 
-int strcmp(const char *p, const char *q) {
+static int strcmp(const char *p, const char *q) {
     while (*p && *p == *q)
         p++, q++;
     return (uchar)*p - (uchar)*q;
 }
 
-uint strlen(const char *s) {
+static uint strlen(const char *s) {
     int n;
 
     for (n = 0; s[n]; n++)
@@ -27,12 +27,15 @@ uint strlen(const char *s) {
     return n;
 }
 
-void *memset(void *dst, int c, uint n) {
-    stosb(dst, c, n);
-    return dst;
+static void *memset(void *dst, int c, uint n) {
+  unsigned char *bytes = dst;
+
+  while (n-- > 0)
+    *bytes++ = c;
+  return dst;
 }
 
-char *strchr(const char *s, char c) {
+static char *strchr(const char *s, char c) {
     for (; *s; s++)
         if (*s == c)
             return (char *)s;
@@ -41,17 +44,7 @@ char *strchr(const char *s, char c) {
 
 
 
-
-int atoi(const char *s) {
-    int n;
-
-    n = 0;
-    while ('0' <= *s && *s <= '9')
-        n = n * 10 + *s++ - '0';
-    return n;
-}
-
-void *memmove(void *vdst, const void *vsrc, int n) {
+static void *memmove(void *vdst, const void *vsrc, int n) {
     char *dst;
     const char *src;
 
@@ -61,5 +54,71 @@ void *memmove(void *vdst, const void *vsrc, int n) {
         *dst++ = *src++;
     return vdst;
 }
+
+
+
+static int
+memcmp(const void *v1, const void *v2, uint n)
+{
+  const uchar *s1, *s2;
+
+  s1 = v1;
+  s2 = v2;
+  while(n-- > 0){
+    if(*s1 != *s2)
+      return *s1 - *s2;
+    s1++, s2++;
+  }
+
+  return 0;
+}
+
+
+
+// memcpy exists to placate GCC.  Use memmove.
+static void*
+memcpy(void *dst, const void *src, uint n)
+{
+  return memmove(dst, src, n);
+}
+
+static int
+strncmp(const char *p, const char *q, uint n)
+{
+  while(n > 0 && *p && *p == *q)
+    n--, p++, q++;
+  if(n == 0)
+    return 0;
+  return (uchar)*p - (uchar)*q;
+}
+
+static char*
+strncpy(char *s, const char *t, int n)
+{
+  char *os;
+
+  os = s;
+  while(n-- > 0 && (*s++ = *t++) != 0)
+    ;
+  while(n-- > 0)
+    *s++ = 0;
+  return os;
+}
+
+// Like strncpy but guaranteed to NUL-terminate.
+static char* strcpy_n(char *s, const char *t, int n)
+{
+  char *os;
+
+  os = s;
+  if(n <= 0)
+    return os;
+  while(--n > 0 && (*s++ = *t++) != 0)
+    ;
+  *s = 0;
+  return os;
+}
+
+
 
 #endif

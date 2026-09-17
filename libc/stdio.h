@@ -3,6 +3,6 @@
 
 // MyXV6 stdio.h
 
-void printf(int fd, const char *fmt, ...);
+int printf(int fd, const char *fmt, ...);
 
 #endif
