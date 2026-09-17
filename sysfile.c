@@ -257,14 +257,11 @@ static int isdirempty(struct inode *dp) {
 }
 
 //PAGEBREAK!
-int sys_unlink(void) {
+static int unlinkpath(char *path) {
     struct inode *ip, *dp;
     struct dirent de;
-    char name[DIRSIZ], *path;
+    char name[DIRSIZ];
     uint off;
-
-    if (argstr(0, &path) < 0)
-        return -1;
 
     begin_op();
     if ((dp = nameiparent(path, name)) == 0) {
@@ -312,6 +309,33 @@ bad:
     return -1;
 }
 
+int sys_unlink(void) {
+    char *path;
+
+    if (argstr(0, &path) < 0)
+        return -1;
+    return unlinkpath(path);
+}
+
+int removeprocfile(int pid) {
+    char path[64];
+    char *pidstr;
+    int i;
+
+    safestrcpy(path, "/proc/", sizeof(path));
+    pidstr = itoa(pid, 10);
+    for (i = 0; pidstr[i] != 0; i++)
+        path[6 + i] = pidstr[i];
+    path[6 + i] = '/';
+    safestrcpy(path + 7 + i, "status", sizeof(path) - 7 - i);
+
+    if (unlinkpath(path) < 0)
+        return -1;
+
+    path[6 + i] = 0;
+    return unlinkpath(path);
+}
+
 static struct inode *create(char *path, short type, short major, short minor) {
     struct inode *ip, *dp;
     char name[DIRSIZ];
@@ -352,6 +376,51 @@ static struct inode *create(char *path, short type, short major, short minor) {
     iunlockput(dp);
 
     return ip;
+}
+
+int createprocfile(int pid, const char* str) {
+    char path[64];
+    char *pidstr;
+    int i, str_len;
+    struct inode *ip;
+
+    safestrcpy(path, "/proc/", sizeof(path));
+    pidstr = itoa(pid, 10);
+    for (i = 0; pidstr[i] != 0; i++)
+        path[6 + i] = pidstr[i];
+    path[6 + i] = 0;
+
+    begin_op();
+    ip = create(path, T_DIR, 0, 0);
+    if (ip == 0) {
+        end_op();
+        return -1;
+    }
+    iunlockput(ip);
+
+    path[6 + i] = '/';
+    safestrcpy(path + 7 + i, "status", sizeof(path) - 7 - i);
+    ip = create(path, T_FILE, 0, 0);
+    if (ip == 0) {
+        end_op();
+        return -1;
+    }
+
+    if (str == 0) {
+        iunlockput(ip);
+        end_op();
+        return -1;
+    }
+    str_len = strlen(str);
+
+    if (writei(ip, (char *)str, 0, str_len) != str_len) {
+        iunlockput(ip);
+        end_op();
+        return -1;
+    }
+    iunlockput(ip);
+    end_op();
+    return 0;
 }
 
 int sys_open(void) {

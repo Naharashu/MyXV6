@@ -118,6 +118,9 @@ int             pipewrite(struct pipe*, char*, int);
 
 //PAGEBREAK: 16
 // proc.c
+char*           itoa(int, int);
+int             createprocfile(int, const char*);
+int             removeprocfile(int);
 int             cpuid(void);
 void            exit(void);
 int             fork(void);

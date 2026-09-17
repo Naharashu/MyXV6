@@ -28,11 +28,11 @@ static uint strlen(const char *s) {
 }
 
 static void *memset(void *dst, int c, uint n) {
-  unsigned char *bytes = dst;
+    unsigned char *bytes = dst;
 
-  while (n-- > 0)
-    *bytes++ = c;
-  return dst;
+    while (n-- > 0)
+        *bytes++ = c;
+    return dst;
 }
 
 static char *strchr(const char *s, char c) {
@@ -41,7 +41,6 @@ static char *strchr(const char *s, char c) {
             return (char *)s;
     return 0;
 }
-
 
 
 static void *memmove(void *vdst, const void *vsrc, int n) {
@@ -56,69 +55,71 @@ static void *memmove(void *vdst, const void *vsrc, int n) {
 }
 
 
+static int memcmp(const void *v1, const void *v2, uint n) {
+    const uchar *s1, *s2;
 
-static int
-memcmp(const void *v1, const void *v2, uint n)
-{
-  const uchar *s1, *s2;
+    s1 = v1;
+    s2 = v2;
+    while (n-- > 0) {
+        if (*s1 != *s2)
+            return *s1 - *s2;
+        s1++, s2++;
+    }
 
-  s1 = v1;
-  s2 = v2;
-  while(n-- > 0){
-    if(*s1 != *s2)
-      return *s1 - *s2;
-    s1++, s2++;
-  }
-
-  return 0;
+    return 0;
 }
-
 
 
 // memcpy exists to placate GCC.  Use memmove.
-static void*
-memcpy(void *dst, const void *src, uint n)
-{
-  return memmove(dst, src, n);
+static void *memcpy(void *dst, const void *src, uint n) {
+    return memmove(dst, src, n);
 }
 
-static int
-strncmp(const char *p, const char *q, uint n)
-{
-  while(n > 0 && *p && *p == *q)
-    n--, p++, q++;
-  if(n == 0)
-    return 0;
-  return (uchar)*p - (uchar)*q;
+static int strncmp(const char *p, const char *q, uint n) {
+    while (n > 0 && *p && *p == *q)
+        n--, p++, q++;
+    if (n == 0)
+        return 0;
+    return (uchar)*p - (uchar)*q;
 }
 
-static char*
-strncpy(char *s, const char *t, int n)
-{
-  char *os;
+static char *strncpy(char *s, const char *t, int n) {
+    char *os;
 
-  os = s;
-  while(n-- > 0 && (*s++ = *t++) != 0)
-    ;
-  while(n-- > 0)
-    *s++ = 0;
-  return os;
+    os = s;
+    while (n-- > 0 && (*s++ = *t++) != 0)
+        ;
+    while (n-- > 0)
+        *s++ = 0;
+    return os;
 }
 
 // Like strncpy but guaranteed to NUL-terminate.
-static char* strcpy_n(char *s, const char *t, int n)
-{
-  char *os;
+static char *strcpy_n(char *s, const char *t, int n) {
+    char *os;
 
-  os = s;
-  if(n <= 0)
+    os = s;
+    if (n <= 0)
+        return os;
+    while (--n > 0 && (*s++ = *t++) != 0)
+        ;
+    *s = 0;
     return os;
-  while(--n > 0 && (*s++ = *t++) != 0)
-    ;
-  *s = 0;
-  return os;
 }
 
+// Source - https://stackoverflow.com/a/2490637
+// Posted by unwind, modified by community. See post 'Timeline' for change history
+// Retrieved 2026-09-17, License - CC BY-SA 2.5
+
+char *strcat(char *dest, const char *src) {
+    char *rdest = dest;
+
+    while (*dest)
+        dest++;
+    while (*dest++ = *src++)
+        ;
+    return rdest;
+}
 
 
 #endif

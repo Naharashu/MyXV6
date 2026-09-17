@@ -209,6 +209,7 @@ main(int argc, char *argv[])
 
   uint devino = mkdir_inode(rootino, "dev");
   uint libcino = mkdir_inode(rootino, "libc");
+  mkdir_inode(rootino, "proc");
   add_file(libcino, "libc/stdint.h", "stdint.h");
   add_file(libcino, "libc/stdio.h", "stdio.h");
   add_file(libcino, "libc/string.h", "string.h");
