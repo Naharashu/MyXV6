@@ -108,6 +108,11 @@ extern int sys_rename(void);
 extern int sys_reboot(void);
 extern int sys_setforegroundpid(void);
 
+extern int sys_setuid(void);
+extern int sys_setgid(void);
+extern int sys_getuid(void);
+extern int sys_getpid(void);
+
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
 [SYS_exit]    sys_exit,
@@ -133,6 +138,10 @@ static int (*syscalls[])(void) = {
 [SYS_rename]  sys_rename,
 [SYS_reboot]  sys_reboot,
 [SYS_setforegroundpid]  sys_setforegroundpid,
+[SYS_setuid]  sys_setuid,
+[SYS_setgid]  sys_setgid,
+[SYS_getuid]  sys_getuid,
+[SYS_getpid]  sys_getpid,
 };
 
 void

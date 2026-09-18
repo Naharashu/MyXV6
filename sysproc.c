@@ -97,3 +97,33 @@ int sys_setforegroundpid(void) {
   foreground_pid = pid;
   return 0;
 }
+
+int sys_setuid(void) {
+  int uid;
+  if(argint(0, &uid) < 0) {
+    return -1;
+  }
+  struct proc* currproc = myproc();
+  if(currproc->uid != 0) return -1;
+  currproc->uid = uid;
+  return 0;
+}
+
+int sys_setgid(void) {
+  int gid;
+  if(argint(0, &gid) < 0) {
+    return -1;
+  }
+  struct proc* currproc = myproc();
+  if(currproc->gid != 0) return -1;
+  currproc->gid = gid;
+  return 0;
+}
+
+int sys_getuid(void) {
+  return myproc()->uid;
+}
+
+int sys_getgid(void) {
+  return myproc()->gid;
+}

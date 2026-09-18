@@ -425,21 +425,28 @@ int createprocfile(int pid, const char* str) {
 
 int sys_open(void) {
     char *path;
-    int fd, omode;
+    int fd, omode, mode;
     struct file *f;
     struct inode *ip;
 
     if (argstr(0, &path) < 0 || argint(1, &omode) < 0)
         return -1;
 
+    if(argint(2, &mode)<0) mode = 0666;
+
     begin_op();
 
     if (omode & O_CREATE) {
+        struct proc *curproc = myproc();
         ip = create(path, T_FILE, 0, 0);
         if (ip == 0) {
             end_op();
             return -1;
         }
+        ip->mode = mode & ~(curproc->umask);
+        ip->uid = curproc->uid;
+        ip->gid = curproc->gid;
+        iupdate(ip);
     } else {
         if ((ip = namei(path)) == 0) {
             end_op();
@@ -476,11 +483,17 @@ int sys_mkdir(void) {
     char *path;
     struct inode *ip;
 
+    struct proc *curproc = myproc();
+
     begin_op();
     if (argstr(0, &path) < 0 || (ip = create(path, T_DIR, 0, 0)) == 0) {
         end_op();
         return -1;
     }
+    ip->mode = 0777 & ~(curproc->umask);
+    ip->uid = curproc->uid;
+    ip->gid = curproc->gid;
+    iupdate(ip);
     iunlockput(ip);
     end_op();
     return 0;

@@ -14,7 +14,9 @@
 
 char *itoa(int val, int base) {
 
-    static char buf[32] = {0};
+    char* buf = kalloc();
+    memset(buf, 0, 32);
+    buf[31] = '\0';
 
     int i = 30;
 
@@ -144,6 +146,9 @@ found:
     p->context = (struct context *)sp;
     memset(p->context, 0, sizeof *p->context);
     p->context->eip = (uint)forkret;
+    p->uid=0;
+    p->gid=0;
+    p->umask=0022;
 
     return p;
 }
@@ -228,6 +233,9 @@ int fork(void) {
     np->sz = curproc->sz;
     np->parent = curproc;
     *np->tf = *curproc->tf;
+    np->uid = curproc->uid;
+    np->gid = curproc->gid;
+    np->umask = curproc->umask;
 
     // Clear %eax so that fork returns 0 in the child.
     np->tf->eax = 0;
@@ -438,6 +446,10 @@ void forkret(void) {
     strcat(status, p->name);
     strcat(status, "\n");
 
+    strcat(status, "Umask: ");
+    strcat(status, itoa(p->umask, 10));
+    strcat(status, "\n");
+
     strcat(status, "Pid:\t");
     strcat(status, itoa(p->pid, 10));
     strcat(status, "\n");
@@ -445,6 +457,14 @@ void forkret(void) {
     parent_pid = p->parent ? p->parent->pid : 0;
     strcat(status, "PPid:\t");
     strcat(status, itoa(parent_pid, 10));
+    strcat(status, "\n");
+
+    strcat(status, "Uid:\t");
+    strcat(status, itoa(p->uid, 10));
+    strcat(status, "\n");
+
+    strcat(status, "Gid:\t");
+    strcat(status, itoa(p->gid, 10));
     strcat(status, "\n");
 
     switch (p->state) {

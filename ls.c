@@ -68,9 +68,9 @@ ls(char *path)
       }
       if(st.type == 1 && (strcmp(fmtname(buf), "..")!=0||strcmp(fmtname(buf), ".")!=0)) {
         //printf(1, "/%s %d %d %d\n", fmtname(buf), st.type, st.ino, st.size);
-        printf(1, "/%s %dB\n", fmtname(buf), st.size);
+        printf(1, "/%s %dB %d\n", fmtname(buf), st.size, st.mode);
       } else {
-        printf(1, "%s %dB\n", fmtname(buf), st.size);
+        printf(1, "%s %dB %d\n", fmtname(buf), st.size, st.mode);
       }
     }
     break;

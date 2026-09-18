@@ -197,6 +197,14 @@ struct inode *ialloc(uint dev, short type) {
         if (dip->type == 0) { // a free inode
             memset(dip, 0, sizeof(*dip));
             dip->type = type;
+            dip->uid = myproc()->uid;
+            dip->gid = myproc()->gid;
+
+            if(type == T_DIR)
+                dip->mode = 0777 & ~myproc()->umask;
+            else
+                dip->mode = 0666 & ~myproc()->umask;
+
             log_write(bp); // mark it allocated on the disk
             brelse(bp);
             return iget(dev, inum);
@@ -221,6 +229,9 @@ void iupdate(struct inode *ip) {
     dip->minor = ip->minor;
     dip->nlink = ip->nlink;
     dip->size = ip->size;
+    dip->uid = ip->uid;
+    dip->gid = ip->gid;
+    dip->mode = ip->mode;
     memmove(dip->addrs, ip->addrs, sizeof(ip->addrs));
     log_write(bp);
     brelse(bp);
@@ -231,6 +242,7 @@ void iupdate(struct inode *ip) {
 // the inode and does not read it from disk.
 static struct inode *iget(uint dev, uint inum) {
     struct inode *ip, *empty;
+    struct proc *curproc = myproc();
 
     acquire(&icache.lock);
 
@@ -288,6 +300,9 @@ void ilock(struct inode *ip) {
         ip->minor = dip->minor;
         ip->nlink = dip->nlink;
         ip->size = dip->size;
+        ip->uid = dip->uid;
+        ip->gid = dip->gid;
+        ip->mode = dip->mode;
         memmove(ip->addrs, dip->addrs, sizeof(ip->addrs));
         brelse(bp);
         ip->valid = 1;
@@ -455,6 +470,9 @@ void stati(struct inode *ip, struct stat *st) {
     st->type = ip->type;
     st->nlink = ip->nlink;
     st->size = ip->size;
+    st->uid = ip->uid;
+    st->gid = ip->gid;
+    st->mode = ip->mode;
 }
 
 //PAGEBREAK!
