@@ -683,3 +683,23 @@ struct inode *namei(char *path) {
 struct inode *nameiparent(char *path, char *name) {
     return namex(path, 1, name);
 }
+
+
+int
+inode_perm(struct inode *ip, struct proc *p, int perm)
+{
+    uint bits;
+
+    // root
+    if(p->uid == 0)
+        return 1;
+
+    if(p->uid == ip->uid)
+        bits = (ip->mode >> 6) & 7;
+    else if(p->gid == ip->gid)
+        bits = (ip->mode >> 3) & 7;
+    else
+        bits = ip->mode & 7;
+
+    return (bits & perm) == perm;
+}

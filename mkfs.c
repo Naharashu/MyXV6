@@ -38,7 +38,7 @@ void wsect(uint, void*);
 void winode(uint, struct dinode*);
 void rinode(uint inum, struct dinode *ip);
 void rsect(uint sec, void *buf);
-uint ialloc(ushort type);
+uint ialloc(ushort type, uint mode);
 void iappend(uint inum, void *p, int n);
 
 // convert to intel byte order
@@ -67,7 +67,7 @@ xint(uint x)
 uint
 mkdir_inode(uint parent, char *name)
 {
-    uint inum = ialloc(T_DIR);
+    uint inum = ialloc(T_DIR, -1);
     struct dirent de;
 
     bzero(&de, sizeof(de));
@@ -93,7 +93,7 @@ mkdir_inode(uint parent, char *name)
 uint
 mknod_inode(uint parent, char *name, short major, short minor)
 {
-    uint inum = ialloc(T_DEV);
+    uint inum = ialloc(T_DEV, 0666);
 
     // Set major/minor in the newly allocated dinode.
     struct dinode din;
@@ -118,7 +118,7 @@ mknod_inode(uint parent, char *name, short major, short minor)
 }
 
 uint
-add_file(uint parent, char *host_path, char *file_name)
+add_file(uint parent, char *host_path, char *file_name, uint mode)
 {
   int fd, cc;
   char buf[BSIZE];
@@ -130,7 +130,7 @@ add_file(uint parent, char *host_path, char *file_name)
     exit(1);
   }
 
-  inum = ialloc(T_FILE);
+  inum = ialloc(T_FILE, mode);
 
   bzero(&de, sizeof(de));
   de.inum = xshort(inum);
@@ -194,7 +194,7 @@ main(int argc, char *argv[])
   memmove(buf, &sb, sizeof(sb));
   wsect(1, buf);
 
-  rootino = ialloc(T_DIR);
+  rootino = ialloc(T_DIR, -1);
   assert(rootino == ROOTINO);
 
   bzero(&de, sizeof(de));
@@ -210,12 +210,13 @@ main(int argc, char *argv[])
   uint devino = mkdir_inode(rootino, "dev");
   uint libcino = mkdir_inode(rootino, "libc");
   mkdir_inode(rootino, "proc");
-  add_file(libcino, "libc/stdint.h", "stdint.h");
-  add_file(libcino, "libc/stdio.h", "stdio.h");
-  add_file(libcino, "libc/string.h", "string.h");
-  add_file(libcino, "libc/stddef.h", "stddef.h");
-  add_file(libcino, "libc/stdlib.h", "stdlib.h");
-  add_file(libcino, "libc/stdlib.c", "stdlib.c");
+  add_file(libcino, "libc/stdint.h", "stdint.h", 0666);
+  add_file(libcino, "libc/stdio.h", "stdio.h", 0666);
+  add_file(libcino, "libc/string.h", "string.h", 0666);
+  add_file(libcino, "libc/stddef.h", "stddef.h", 0666);
+  add_file(libcino, "libc/stdlib.h", "stdlib.h", 0666);
+  add_file(libcino, "libc/stdlib.c", "stdlib.c", 0666);
+  add_file(libcino, "libc/stdlib.c", "stdlib.ctest", 0363);
   mkdir_inode(rootino, "tmp");
 
   mknod_inode(devino, "console", 1, 0);
@@ -236,10 +237,13 @@ main(int argc, char *argv[])
     // The binaries are named _rm, _cat, etc. to keep the
     // build operating system from trying to execute them
     // in place of system binaries like rm and cat.
-    if(argv[i][0] == '_')
+    _Bool executable = 0;
+    if(argv[i][0] == '_') {
       ++argv[i];
+      executable = 1;
+    }
 
-    inum = ialloc(T_FILE);
+    inum = ialloc(T_FILE ,(executable == 1 ? 0755 : 0644));
 
     bzero(&de, sizeof(de));
     de.inum = xshort(inum);
@@ -318,16 +322,32 @@ rsect(uint sec, void *buf)
 }
 
 uint
-ialloc(ushort type)
+ialloc(ushort type, uint mode)
 {
   uint inum = freeinode++;
   struct dinode din;
 
   bzero(&din, sizeof(din));
+
   din.type = xshort(type);
   din.nlink = xshort(1);
   din.size = xint(0);
+
+  // Default filesystem ownership.
+  din.uid = xint(0);
+  din.gid = xint(0);
+
+  if(type == T_DIR&&mode==-1)
+    din.mode = xint(0755);
+  else if(type == T_FILE&&mode==-1)
+    din.mode = xint(0644);
+  else if(type == T_DEV&&mode==-1)
+    din.mode = xint(0666);
+  else
+    din.mode = xint(mode);
+
   winode(inum, &din);
+
   return inum;
 }
 

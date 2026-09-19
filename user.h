@@ -21,18 +21,19 @@ int mkdir(const char*);
 int chdir(const char*);
 int dup(int);
 int getpid(void);
-int setuid(void);
-int setgid(void);
+int setuid(int);
+int setgid(int);
 int getuid(void);
 int getgid(void);
 char* sbrk(int);
 int sleep(int);
 int uptime(void);
+int umask(int);
+int stat(const char*, struct stat*); 
 
 
 
 // ulib.c
-int stat(const char*, struct stat*);
 char* strcpy(char*, const char*);
 void *memmove(void*, const void*, int);
 char* strchr(const char*, char c);

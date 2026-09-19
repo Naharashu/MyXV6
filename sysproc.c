@@ -127,3 +127,16 @@ int sys_getuid(void) {
 int sys_getgid(void) {
   return myproc()->gid;
 }
+
+int sys_umask(void) {
+  int umask;
+  if(argint(0, &umask) < 0) {
+    return -1;
+  }
+  struct proc* currproc = myproc();
+  umask &= 0777;
+  int old = (int)myproc()->umask;
+  myproc()->umask = umask;
+
+  return old;
+}

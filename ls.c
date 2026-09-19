@@ -2,6 +2,7 @@
 #include "stat.h"
 #include "user.h"
 #include "fs.h"
+#include "libc/stdint.h"
 
 char*
 fmtname(char *path)
@@ -25,6 +26,27 @@ fmtname(char *path)
   return buf;
 }
 
+void mode_to_string(uint16_t mode, char *out_str) {
+    
+    // Owner permissions
+    out_str[0] = (mode & 0400) ? 'r' : '-';
+    out_str[1] = (mode & 0200) ? 'w' : '-';
+    out_str[2] = (mode & 0100) ? 'x' : '-';
+    
+    // Group permissions
+    out_str[3] = (mode & 0040) ? 'r' : '-';
+    out_str[4] = (mode & 0020) ? 'w' : '-';
+    out_str[5] = (mode & 0010) ? 'x' : '-';
+    
+    // Others permissions
+    out_str[6] = (mode & 0004) ? 'r' : '-';
+    out_str[7] = (mode & 0002) ? 'w' : '-';
+    out_str[8] = (mode & 0001) ? 'x' : '-';
+    
+    out_str[9] = '\0'; 
+}
+
+
 void
 ls(char *path)
 {
@@ -32,6 +54,7 @@ ls(char *path)
   int fd;
   struct dirent de;
   struct stat st;
+  char* perms = malloc(10);
 
   if((fd = open(path, 0)) < 0){
     printf(2, "ls: cannot open %s\n", path);
@@ -66,11 +89,12 @@ ls(char *path)
         printf(1, "ls: cannot stat %s\n", buf);
         continue;
       }
-      if(st.type == 1 && (strcmp(fmtname(buf), "..")!=0||strcmp(fmtname(buf), ".")!=0)) {
+      mode_to_string(st.mode, perms);
+      if(st.type == T_DIR && !(de.name[0] == '.' && (de.name[1] == '\0' || (de.name[1] == '.' && de.name[2] == '\0')))) {
         //printf(1, "/%s %d %d %d\n", fmtname(buf), st.type, st.ino, st.size);
-        printf(1, "/%s %dB %d\n", fmtname(buf), st.size, st.mode);
+        printf(1, "/%s %dB %s\n", fmtname(buf), st.size, perms);
       } else {
-        printf(1, "%s %dB %d\n", fmtname(buf), st.size, st.mode);
+        printf(1, "%s %dB %s\n", fmtname(buf), st.size, perms);
       }
     }
     break;

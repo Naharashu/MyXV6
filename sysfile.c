@@ -194,6 +194,34 @@ int sys_fstat(void) {
     return filestat(f, st);
 }
 
+int
+sys_stat(void)
+{
+  char *path;
+  struct inode *ip;
+  struct stat st;
+  struct stat *st_ptr;
+
+  if(argstr(0, &path) < 0 || argptr(1, (void*)&st_ptr, sizeof(*st_ptr)) < 0)
+    return -1;
+
+  begin_op();
+  if((ip = namei(path)) == 0){
+    end_op();
+    return -1;
+  }
+  ilock(ip);
+  
+  stati(ip, &st); 
+  
+  iunlockput(ip);
+  end_op();
+
+  memmove(st_ptr, &st, sizeof(st));
+  return 0;
+}
+
+
 // Create the path new as a link to the same inode as old.
 int sys_link(void) {
     char name[DIRSIZ], *new, *old;
@@ -423,34 +451,48 @@ int createprocfile(int pid, const char* str) {
     return 0;
 }
 
+
+#define P_READ  4
+#define P_WRITE 2
+#define P_EXEC  1
+
 int sys_open(void) {
     char *path;
     int fd, omode, mode;
     struct file *f;
     struct inode *ip;
+    struct proc *curproc = myproc();
 
     if (argstr(0, &path) < 0 || argint(1, &omode) < 0)
         return -1;
 
-    if(argint(2, &mode)<0) mode = 0666;
+    if (argint(2, &mode) < 0) 
+        mode = 0666;
+
+    int accmode = omode & O_ACCMODE;
+    int want = 0;
+    if (accmode == O_RDONLY)      want = P_READ;
+    else if (accmode == O_WRONLY) want = P_WRITE;
+    else if (accmode == O_RDWR)   want = P_READ | P_WRITE;
 
     begin_op();
 
     if (omode & O_CREATE) {
-        struct proc *curproc = myproc();
         ip = create(path, T_FILE, 0, 0);
         if (ip == 0) {
             end_op();
-            return -1;
+            return -1; // File creation failure (returns standard -1)
         }
         ip->mode = mode & ~(curproc->umask);
         ip->uid = curproc->uid;
         ip->gid = curproc->gid;
         iupdate(ip);
+        
+        // Owner naturally has absolute rights during explicit creation phase
     } else {
         if ((ip = namei(path)) == 0) {
             end_op();
-            return -1;
+            return -1; // File does not exist (returns standard -1)
         }
         ilock(ip);
         if (ip->type == T_DIR && omode != O_RDONLY) {
@@ -458,15 +500,24 @@ int sys_open(void) {
             end_op();
             return -1;
         }
+
+        // Active Security Verification
+        if (!inode_perm(ip, curproc, want)) {
+            iunlockput(ip);
+            end_op();
+            return -2; // PERMISSION DENIED! Returns -2 cleanly with NO leaks!
+        }
     }
 
+    // Allocate resources ONLY on proven success path
     if ((f = filealloc()) == 0 || (fd = fdalloc(f)) < 0) {
         if (f)
-            fileclose(f);
+            fileclose(f); // Or f->type = FD_NONE depending on your version
         iunlockput(ip);
         end_op();
         return -1;
     }
+    
     iunlock(ip);
     end_op();
 
@@ -476,8 +527,10 @@ int sys_open(void) {
     f->readable = !(omode & O_WRONLY);
     f->writable = (omode & O_WRONLY) || (omode & O_RDWR);
     f->append = (omode & O_APPEND) != 0;
+    
     return fd;
 }
+
 
 int sys_mkdir(void) {
     char *path;
