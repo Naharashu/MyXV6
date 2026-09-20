@@ -3,6 +3,7 @@
 
 #include "types.h"
 #include "stat.h"
+#include "libc/string.h"
 #include "user.h"
 
 #define N  1000

@@ -367,7 +367,9 @@ static uint
 bmap(struct inode *ip, uint bn)
 {
   uint addr, *a, *b;
+  uint i, j;
   struct buf *bp, *bp2;
+  int intermediate_addr=0;
 
   if(bn < NDIRECT){
     if((addr = ip->addrs[bn]) == 0)
@@ -377,7 +379,6 @@ bmap(struct inode *ip, uint bn)
 
   bn -= NDIRECT;
 
-  // Single indirect
   if(bn < NINDIRECT){
     if((addr = ip->addrs[NDIRECT]) == 0)
       ip->addrs[NDIRECT] = addr = balloc(ip->dev);
@@ -396,29 +397,49 @@ bmap(struct inode *ip, uint bn)
 
   bn -= NINDIRECT;
 
-  // Double indirect
   if(bn < NDOUBLYINDIRECT){
+    i = bn / NINDIRECT;
+    j = bn % NINDIRECT;
+
+    // Top-level double-indirect block.
     if((addr = ip->addrs[NDIRECT + 1]) == 0)
       ip->addrs[NDIRECT + 1] = addr = balloc(ip->dev);
 
     bp = bread(ip->dev, addr);
     a = (uint*)bp->data;
 
-    uint i = bn / NINDIRECT;
-    uint j = bn % NINDIRECT;
+    if(a[i] == 0){
+      brelse(bp);
 
-    if((addr = a[i]) == 0){
-      a[i] = addr = balloc(ip->dev);
+      uint newaddr = balloc(ip->dev);
+
+      bp = bread(ip->dev, addr);
+      a = (uint*)bp->data;
+
+      a[i] = newaddr;
       log_write(bp);
+
+      intermediate_addr = newaddr;
+    } else {
+      intermediate_addr = a[i];
     }
 
     brelse(bp);
 
-    bp2 = bread(ip->dev, addr);
+    // Second-level indirect block.
+    bp2 = bread(ip->dev, intermediate_addr);
     b = (uint*)bp2->data;
 
     if((addr = b[j]) == 0){
-      b[j] = addr = balloc(ip->dev);
+      addr = balloc(ip->dev);
+
+      // Reacquire the second-level block.
+      brelse(bp2);
+
+      bp2 = bread(ip->dev, intermediate_addr);
+      b = (uint*)bp2->data;
+
+      b[j] = addr;
       log_write(bp2);
     }
 

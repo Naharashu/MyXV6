@@ -213,6 +213,7 @@ main(int argc, char *argv[])
   add_file(libcino, "libc/stdint.h", "stdint.h", 0666);
   add_file(libcino, "libc/stdio.h", "stdio.h", 0666);
   add_file(libcino, "libc/string.h", "string.h", 0666);
+  add_file(libcino, "libc/string.c", "string.c", 0666);
   add_file(libcino, "libc/stddef.h", "stddef.h", 0666);
   add_file(libcino, "libc/stdlib.h", "stdlib.h", 0666);
   add_file(libcino, "libc/stdlib.c", "stdlib.c", 0666);

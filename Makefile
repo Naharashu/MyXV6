@@ -148,7 +148,7 @@ tags: $(OBJS) entryother.S _init
 vectors.S: vectors.pl
 	./vectors.pl > vectors.S
 
-ULIB = ulib.o usys.o printf.o umalloc.o
+ULIB = ulib.o usys.o printf.o umalloc.o libc/string.o libc/stdlib.o
 CRT0 = libc/crt0.o
 
 _%: %.o $(ULIB) $(CRT0)
@@ -159,10 +159,10 @@ _%: %.o $(ULIB) $(CRT0)
 _forktest: forktest.o $(ULIB)
 	# forktest has less library code linked in - needs to be small
 	# in order to be able to max out the proc table.
-	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o _forktest forktest.o ulib.o usys.o
+	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o _forktest forktest.o ulib.o usys.o libc/string.o
 	$(OBJDUMP) -S _forktest > forktest.asm
 
-_random: random.o $(ULIB) libc/stdlib.o
+_random: random.o $(ULIB)
 	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o _random $^
 	$(OBJDUMP) -S _random > random.asm
 	$(OBJDUMP) -t _random | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > random.sym
@@ -210,7 +210,7 @@ fs.img: mkfs README.md $(UPROGS)
 clean: 
 	rm -f *.tex *.dvi *.idx *.aux *.log *.ind *.ilg \
 	*.o *.d *.asm *.sym vectors.S bootblock entryother \
-	libc/crt0.o libc/crt0.d \
+	libc/crt0.o libc/crt0.d libc/*.d libc/*.o \
 	initcode initcode.out kernel xv6.img fs.img kernelmemfs \
 	xv6memfs.img mkfs .gdbinit \
 	$(UPROGS)

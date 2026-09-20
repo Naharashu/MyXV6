@@ -135,8 +135,8 @@ int sys_umask(void) {
   }
   struct proc* currproc = myproc();
   umask &= 0777;
-  int old = (int)myproc()->umask;
-  myproc()->umask = umask;
+  int old = (int)currproc->umask;
+  currproc->umask = umask;
 
   return old;
 }

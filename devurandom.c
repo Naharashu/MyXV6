@@ -12,6 +12,8 @@
 #include "traps.h"
 #include "x86.h"
 
+static struct spinlock urnd_lock;
+
 /*
 
 CSPRNG based on http://cr.yp.to/chacha/chacha-20080128.pdf
@@ -91,22 +93,23 @@ void csprng_seed(const uint8_t key[16]) {
 }
 
 uint32_t csprng_get_next_uint32(void) {
+    acquire(&urnd_lock);
     if (chacha_random_output_left == 0) {
         chacha_run();
         chacha_random_output_left = 16;
     }
-    return chacha_random_output[--chacha_random_output_left];
+    uint32_t result = chacha_random_output[--chacha_random_output_left];
+    release(&urnd_lock);
+    return result;
 }
 
 
 int urndread(struct inode *ip, char *dst, int n) {
+    
     int target = n;
-
-    iunlock(ip);
 
     while (n >= 4) {
         if (myproc()->killed) {
-            ilock(ip);
             return -1;
         }
         uint r = csprng_get_next_uint32();
@@ -125,7 +128,6 @@ int urndread(struct inode *ip, char *dst, int n) {
 
         while (n > 0) {
             if (myproc()->killed) {
-                ilock(ip);
                 return -1;
             }
             *dst++ = r;
@@ -134,7 +136,7 @@ int urndread(struct inode *ip, char *dst, int n) {
         }
     }
 
-    ilock(ip);
+
 
     return target;
 }
@@ -146,6 +148,7 @@ int urndwrite(struct inode *ip, char *buf, int n) {
 }
 
 void urndominit(void) {
+    initlock(&urnd_lock, "urandom");
     uint lo, hi;
 
     asm volatile("rdtsc" : "=a"(lo), "=d"(hi));
@@ -156,8 +159,10 @@ void urndominit(void) {
     seed -= hi ^ lo;
     unsigned char s2[4];
     __builtin_memcpy(s2, &seed, sizeof(seed));
-    asm volatile("rdtsc" : "=a"(lo), "=d"(hi));
-    seed ^= hi ^ lo;
+    outb(0x43, 0x00);  // latch channel 0
+    uint8_t pit_lo = inb(0x40);
+    uint8_t pit_hi = inb(0x40);
+    seed = (pit_hi << 8) | pit_lo;
     unsigned char s3[4];
     __builtin_memcpy(s3, &seed, sizeof(seed));
     asm volatile("rdtsc" : "=a"(lo), "=d"(hi));

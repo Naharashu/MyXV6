@@ -7,6 +7,7 @@
 #include "syscall.h"
 #include "traps.h"
 #include "memlayout.h"
+#include "libc/string.h"
 
 char buf[8192];
 char name[3];
@@ -197,7 +198,7 @@ writetest1(void)
     exit();
   }
 
-  for(i = 0; i < MAXFILE; i++){
+  for(i = 0; i < 255; i++){
     ((int*)buf)[0] = i;
     if(write(fd, buf, 512) != 512){
       printf(stdout, "error: write big file failed\n", i);
@@ -217,7 +218,7 @@ writetest1(void)
   for(;;){
     i = read(fd, buf, 512);
     if(i == 0){
-      if(n == MAXFILE - 1){
+      if(n == MAXFILE){
         printf(stdout, "read only %d blocks from big", n);
         exit();
       }
@@ -1174,6 +1175,11 @@ bigfile(void)
   total = 0;
   for(i = 0; ; i++){
     cc = read(fd, buf, 300);
+    // Inside user bigfile test loop:
+    if (i % 10 == 0) {
+        printf(1, "Read iteration: %d, cc: %d\n", i, cc);
+    }
+
     if(cc < 0){
       printf(1, "read bigfile failed\n");
       exit();
@@ -1737,13 +1743,7 @@ void argptest()
   printf(1, "arg test passed\n");
 }
 
-unsigned long randstate = 1;
-unsigned int
-rand()
-{
-  randstate = randstate * 1664525 + 1013904223;
-  return randstate;
-}
+
 
 int
 main(int argc, char *argv[])

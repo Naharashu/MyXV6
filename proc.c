@@ -577,6 +577,7 @@ int kill(int pid) {
             if (p->state == SLEEPING)
                 p->state = RUNNABLE;
             release(&ptable.lock);
+            removeprocfile(pid);
             return 0;
         }
     }
