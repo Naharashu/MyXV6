@@ -142,8 +142,6 @@ int urndread(struct inode *ip, char *dst, int n) {
 }
 
 int urndwrite(struct inode *ip, char *buf, int n) {
-    iunlock(ip);
-    ilock(ip);
     return -1;
 }
 
